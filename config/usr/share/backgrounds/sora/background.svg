@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="3840" height="2160" viewBox="0 0 3840 2160">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0b1026"/>
+      <stop offset="0.5" stop-color="#12183a"/>
+      <stop offset="1" stop-color="#1d1240"/>
+    </linearGradient>
+    <radialGradient id="glow1" cx="0.8" cy="0.15" r="0.65">
+      <stop offset="0" stop-color="#3fd9ff" stop-opacity="0.5"/>
+      <stop offset="1" stop-color="#3fd9ff" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="glow2" cx="0.15" cy="0.85" r="0.6">
+      <stop offset="0" stop-color="#9b5cff" stop-opacity="0.45"/>
+      <stop offset="1" stop-color="#9b5cff" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="3840" height="2160" fill="url(#bg)"/>
+  <rect width="3840" height="2160" fill="url(#glow1)"/>
+  <rect width="3840" height="2160" fill="url(#glow2)"/>
+  <text x="1920" y="1150" font-family="Segoe UI, Inter, sans-serif" font-size="360" font-weight="200" fill="#ffffff" opacity="0.94" text-anchor="middle" letter-spacing="18">Sora</text>
+  <text x="1920" y="1270" font-family="Segoe UI, Inter, sans-serif" font-size="54" font-weight="400" fill="#9fb4d8" text-anchor="middle" letter-spacing="12">UBUNTU TABANLI</text>
+</svg>

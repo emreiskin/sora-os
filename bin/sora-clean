@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+# Sora OS - sistem temizleyici
+set -euo pipefail
+
+run_root() {
+  if [[ ${EUID} -eq 0 ]]; then "$@"; else sudo "$@"; fi
+}
+
+echo "Sora temizleyici çalışıyor..."
+run_root apt-get autoclean 2>/dev/null || true
+run_root apt-get autoremove --purge 2>/dev/null || true
+run_root journalctl --vacuum-time=7d >/dev/null 2>&1 || true
+if [[ -d "$HOME/.cache" ]]; then
+  echo "Kullanıcı önbelleği temizleniyor: ~/.cache"
+  find "$HOME/.cache" -mindepth 1 -maxdepth 1 -exec rm -rf {} + 2>/dev/null || true
+fi
+echo "Tamam."

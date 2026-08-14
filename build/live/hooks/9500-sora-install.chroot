@@ -1,0 +1,47 @@
+#!/bin/sh
+# Sora OS - live-build chroot hook
+# ISO içindeki dosya sistemine Sora OS kurulumunu uygular
+set -e
+
+export DEBIAN_FRONTEND=noninteractive
+export SORA_CUBIC=1
+export SORA_LOG_FILE=/var/log/sora-build.log
+
+echo "==> [Sora] Canlı sistem bileşenleri kuruluyor"
+apt-get update -o Acquire::Retries=3
+apt-get install -y --no-install-recommends \
+  ubuntu-desktop-minimal \
+  casper \
+  ubiquity ubiquity-frontend-gtk ubiquity-slideshow-ubuntu \
+  grub-efi-amd64-signed grub-efi-amd64-bin grub-pc-bin shim-signed \
+  isolinux syslinux-common \
+  unzip curl python3 \
+  dkms build-essential || echo "(!) canlı sistem paketlerinden bazıları kurulamadı"
+
+# Yaygın NVIDIA desteği ISO'ya önceden gömülür (dkms ile modül derlenir)
+apt-get install -y --no-install-recommends nvidia-driver-550 libnvidia-egl-wayland1 || echo "(!) NVIDIA paketi gömülemedi (opsiyonel)"
+
+echo "==> [Sora] initramfs güncelleniyor (casper/ubiquity)"
+update-initramfs -k all -u || echo "(!) initramfs güncellenemedi"
+
+echo "==> [Sora] Varsayılan kullanıcı (sora / sora)"
+id -u sora >/dev/null 2>&1 || useradd -m -s /bin/bash -G adm,cdrom,sudo,dip,plugdev,lpadmin sora
+echo "sora:sora" | chpasswd
+printf '[daemon]\nAutomaticLoginEnable=true\nAutomaticLogin=sora\n[security]\nAllowRoot=false\n' > /etc/gdm3/custom.conf
+printf 'sora\n' > /etc/hostname
+printf '127.0.0.1\tlocalhost\n127.0.1.1\tsora\n' > /etc/hosts
+
+echo "==> [Sora] Kurulum modülleri (01-09)"
+bash /opt/sora/build/cubic-chroot.sh
+
+echo "==> [Sora] libadwaita teması (sora + yeni kullanıcılar için)"
+if [ -x /opt/sora/WhiteSur-gtk-theme/install.sh ]; then
+  su -s /bin/bash sora -c "bash /opt/sora/WhiteSur-gtk-theme/install.sh -l >/dev/null 2>&1" || true
+  mkdir -p /etc/skel/.config
+  cp -a /home/sora/.config/gtk-4.0 /etc/skel/.config/ 2>/dev/null || true
+fi
+
+echo "==> [Sora] Temizlik ve kapatma"
+rm -rf /opt/sora
+apt-get autoremove --purge -y || true
+apt-get clean || true

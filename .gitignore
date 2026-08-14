@@ -1,0 +1,16 @@
+# Sora OS - git yoksayma listesi
+
+# Sistem / editör
+Thumbs.db
+Desktop.ini
+*.tmp
+*~
+.vscode/
+.idea/
+
+# Canlı build çıktıları
+build/live/chroot/
+build/live/tmp/
+build/live/build.log
+*.iso
+*.img

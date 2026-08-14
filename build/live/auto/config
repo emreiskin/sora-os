@@ -1,0 +1,25 @@
+#!/bin/sh
+# Sora OS - live-build yapılandırması (lb config auto script)
+# Ubuntu 24.04 (noble) / amd64 / hybrid ISO
+set -e
+
+lb config noauto \
+  --mode ubuntu \
+  --distribution noble \
+  --architectures amd64 \
+  --archive-areas "main restricted universe multiverse" \
+  --security true \
+  --binary-images iso-hybrid \
+  --binary-filesystem squashfs \
+  --linux-packages "linux-generic" \
+  --bootappend-live "boot=casper quiet splash" \
+  --bootappend-install "boot=casper only-ubiquity quiet splash" \
+  --memtest none \
+  --source false \
+  --checksums false \
+  --debian-installer false \
+  --interactive false \
+  --iso-volume "Sora OS" \
+  --iso-application "Sora OS" \
+  --iso-publisher "Sora OS" \
+  --iso-preparer "Sora OS Build"

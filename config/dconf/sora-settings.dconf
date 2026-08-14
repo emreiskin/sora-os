@@ -1,0 +1,51 @@
+[org/gnome/desktop/background]
+picture-uri='file:///usr/share/backgrounds/sora/background.svg'
+picture-uri-dark='file:///usr/share/backgrounds/sora/background.svg'
+
+[org/gnome/desktop/interface]
+color-scheme='prefer-dark'
+gtk-theme='WhiteSur-dark'
+icon-theme='WhiteSur-dark'
+cursor-theme='WhiteSur-cursors'
+font-name='Inter 11'
+document-font-name='Inter 11'
+monospace-font-name='Ubuntu Mono 11'
+enable-animations=true
+
+[org/gnome/desktop/peripherals/touchpad]
+tap-to-click=true
+
+[org/gnome/desktop/screensaver]
+picture-uri='file:///usr/share/backgrounds/sora/background.svg'
+
+[org/gnome/desktop/session]
+idle-delay=uint32 300
+
+[org/gnome/mutter]
+experimental-features=['scale-monitor-framebuffer']
+
+[org/gnome/settings-daemon/plugins/media-keys]
+custom-keybindings=['/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/sora-game/']
+
+[org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/sora-game/]
+binding='<Control><Alt>g'
+command='sora-gamemode toggle'
+name='Sora Oyun Modu'
+
+[org/gnome/shell]
+enabled-extensions=['appindicatorsupport@rgcjonas.gmail.com','desktop-icons-ng@desktop-icons-ng','dash-to-dock@micxgx.gmail.com','user-theme@gnome-shell-extensions.gcampax.github.com','sora-widgets@soraos.github.com']
+
+[org/gnome/shell/extensions/dash-to-dock]
+dash-max-icon-size=uint32 42
+height-fraction=0.95
+dock-fixed=false
+autohide=false
+dock-position='BOTTOM'
+transparency-mode='FIXED'
+background-opacity=0.7
+intellihide=true
+extend-height=false
+show-trash=true
+
+[org/gnome/shell/extensions/user-theme]
+name='WhiteSur-dark'

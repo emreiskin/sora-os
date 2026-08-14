@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+# Sora OS - sistem durum özeti
+set -euo pipefail
+
+id="$(grep '^ID=' /etc/os-release 2>/dev/null | cut -d= -f2)"
+ver="$(grep '^VERSION_ID=' /etc/os-release 2>/dev/null | cut -d'"' -f2)"
+codename="$(grep '^VERSION_CODENAME=' /etc/os-release 2>/dev/null | cut -d= -f2)"
+cpu="$(grep -m1 'model name' /proc/cpuinfo 2>/dev/null | sed 's/.*: //')"
+gov="$(cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor 2>/dev/null || echo n/a)"
+gpu="$(lspci 2>/dev/null | grep -Ei 'vga|3d|display' | head -1 | sed 's/^[0-9a-f:.]* //')"
+ram="$(free -h 2>/dev/null | awk 'NR==2 {print $3" / "$2}')"
+zram="$(swapon --show=NAME,SIZE 2>/dev/null | awk '/zram/ {print $1" -> "$2; exit}')"
+
+bar="======================="
+echo "$bar"
+echo "  SORA OS  v1.0.0"
+echo "$bar"
+echo "Dağıtım  : ${id:-?} ${ver:-?} (${codename:-?})"
+echo "Kernel   : $(uname -r)"
+echo "CPU      : ${cpu:-n/a}"
+echo "Governor : ${gov}"
+echo "GPU      : ${gpu:-n/a}"
+echo "RAM      : ${ram:-n/a}"
+echo "ZRAM     : ${zram:-yok}"
+echo "$bar"
+if [[ -f /tmp/sora-gamemode.state ]]; then
+  echo "Oyun Modu: AKTİF"
+else
+  echo "Oyun Modu: pasif"
+fi
+if command -v brave-browser >/dev/null 2>&1; then
+  echo "Brave    : kurulu"
+else
+  echo "Brave    : yok"
+fi
+echo "$bar"

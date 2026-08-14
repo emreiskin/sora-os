@@ -1,0 +1,79 @@
+#!/usr/bin/env bash
+# Sora Oyun Modu - CPU governor + GNOME performans ayarları
+# Kullanım: sora-gamemode {on|off|toggle|status}
+set -euo pipefail
+
+STATE="${SORA_GAMEMODE_STATE:-/tmp/sora-gamemode.state}"
+GOV_PERF="performance"
+GOV_NORM="schedutil"
+
+usage() {
+  echo "Kullanım: sora-gamemode {on|off|toggle|status}"
+  exit "${1:-0}"
+}
+
+setgov() {
+  sudo /usr/local/bin/sora-setgov "$1" 2>/dev/null || {
+    echo "Hata: governor değiştirilemedi (sudo gerekiyor)"
+    exit 1
+  }
+}
+
+notify_user() {
+  local u="${SUDO_USER:-${USER:-}}"
+  if [[ -n "$u" && "$u" != "root" ]]; then
+    sudo -n -u "$u" notify-send -a Sora "$1" "$2" 2>/dev/null || true
+  else
+    notify-send -a Sora "$1" "$2" 2>/dev/null || true
+  fi
+}
+
+set_animations() {
+  local u="${SUDO_USER:-${USER:-}}"
+  if [[ -n "$u" && "$u" != "root" ]]; then
+    sudo -n -u "$u" gsettings set org.gnome.desktop.interface enable-animations "$1" 2>/dev/null || true
+  else
+    gsettings set org.gnome.desktop.interface enable-animations "$1" 2>/dev/null || true
+  fi
+}
+
+current_gov() {
+  if [[ -f /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor ]]; then
+    cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor
+  else
+    echo "bilinmiyor"
+  fi
+}
+
+sora_on() {
+  setgov "$GOV_PERF"
+  set_animations false
+  touch "$STATE"
+  notify_user "Oyun Modu AÇIK" "CPU: performance  •  Animasyonlar kapalı"
+}
+
+sora_off() {
+  setgov "$GOV_NORM"
+  set_animations true
+  rm -f "$STATE"
+  notify_user "Oyun Modu KAPALI" "CPU: schedutil  •  Animasyonlar açık"
+}
+
+case "${1:-}" in
+  on)
+    sora_on
+    ;;
+  off)
+    sora_off
+    ;;
+  toggle)
+    if [[ -f "$STATE" ]]; then sora_off; else sora_on; fi
+    ;;
+  status)
+    echo "Oyun Modu  : $([[ -f "$STATE" ]] && echo AKTİF || echo pasif)"
+    echo "CPU Governor: $(current_gov)"
+    ;;
+  *)
+    usage 1
+    ;;
+esac

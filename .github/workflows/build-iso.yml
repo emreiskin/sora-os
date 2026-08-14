@@ -1,0 +1,42 @@
+name: Sora OS - ISO Build
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  build-iso:
+    name: Sora OS ISO (Ubuntu 24.04 / amd64)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 180
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build bağımlılıklarını kur
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            live-build fakeroot debootstrap \
+            xorriso squashfs-tools isolinux syslinux-common \
+            grub-efi-amd64-bin grub-pc-bin \
+            dosfstools mtools \
+            ubuntu-keyring debian-archive-keyring
+
+      - name: Disk kontrolü
+        run: df -h
+
+      - name: ISO üret (live-build)
+        run: bash build/live/build.sh
+
+      - name: ISO artefakt olarak yükle
+        uses: actions/upload-artifact@v4
+        with:
+          name: Sora-OS-ISO
+          path: build/live/live-image-amd64.hybrid.iso
+          if-no-files-found: error
+          retention-days: 14

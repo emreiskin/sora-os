@@ -1,0 +1,214 @@
+#!/usr/bin/env bash
+# Sora ikon yöneticisi - uygulama ikonlarını kullanıcı bazında değiştirir
+# Kurulum: bu dosya /usr/local/bin/sora-icon olarak kurulur (modules/07 install_bins)
+set -euo pipefail
+
+REAL_HOME="${HOME:-/root}"
+if [[ -n "${SUDO_USER:-}" && "${SUDO_USER}" != "root" ]] && command -v getent >/dev/null 2>&1; then
+  REAL_HOME="$(getent passwd "$SUDO_USER" | cut -d: -f6)"
+  [[ -n "$REAL_HOME" ]] || REAL_HOME="${HOME:-/root}"
+fi
+
+SORA_ICON_DIR="$REAL_HOME/.local/share/icons/sora-apps"
+SORA_APP_DIR="$REAL_HOME/.local/share/applications"
+
+usage() {
+  cat <<'EOF'
+Sora İkon Yöneticisi
+Kullanım: sora-icon {komut} [argümanlar]
+
+Komutlar:
+  list                          Uygulama kısayollarını listele
+  set <uygulama> <ikon>         Uygulama ikonunu değiştir (dosya yolu veya ikon/tema adı)
+  reset <uygulama>              Özel ikonu geri al
+  theme <tema-adı>              Sistem ikon temasını değiştir
+  themes                        Kurulu ikon temalarını listele
+  install <ikon-dosyası> [ad]   İkonu kullanıcı kitaplığına kur
+  status                        Özel ikonları listele
+
+Örnekler:
+  sora-icon list
+  sora-icon set brave-browser /home/kullanici/Ikonlar/brave.png
+  sora-icon set steam papirus-games-steam
+  sora-icon theme Papirus-Dark
+  sora-icon reset brave-browser
+EOF
+}
+
+fix_ownership() {
+  if [[ -n "${SUDO_USER:-}" && "${SUDO_USER}" != "root" ]]; then
+    chown -R "${SUDO_USER}:${SUDO_USER}" "$SORA_ICON_DIR" "$SORA_APP_DIR" 2>/dev/null || true
+  fi
+}
+
+find_desktop() {
+  local app="$1" f appname execb wm
+  local dirs=(
+    "$SORA_APP_DIR"
+    /usr/local/share/applications
+    /usr/share/applications
+  )
+  # 1) tam dosya adı eşleşmesi
+  while IFS= read -r f; do
+    [[ -f "$f" ]] || continue
+    if [[ "$(basename "$f" .desktop)" == "$app" ]]; then
+      printf '%s\n' "$f"
+      return 0
+    fi
+  done < <(find "${dirs[@]}" -name '*.desktop' -type f 2>/dev/null | sort -u)
+  # 2) Name= / Exec= / StartupWMClass eşleşmesi (büyük/küçük harf duyarsız)
+  app="${app,,}"
+  while IFS= read -r f; do
+    [[ -f "$f" ]] || continue
+    appname="$(awk -F= '/^Name=/{print $2; exit}' "$f")"
+    execb="$(awk -F= '/^Exec=/{print $2; exit}' "$f" | sed 's/^env //' | awk '{print $1}' | sed 's|.*/||')"
+    wm="$(awk -F= '/^StartupWMClass=/{print $2; exit}' "$f")"
+    case "$app" in
+      "${appname,,}"|"${execb,,}"|"${wm,,}")
+        printf '%s\n' "$f"
+        return 0
+        ;;
+    esac
+  done < <(find "${dirs[@]}" -name '*.desktop' -type f 2>/dev/null | sort -u)
+  return 1
+}
+
+resolve_icon() {
+  local app="$1" icon="$2" name ext target
+  if [[ -f "$icon" ]]; then
+    install -d -m 0755 "$SORA_ICON_DIR"
+    name="$(basename "${icon%.*}")"
+    ext="${icon##*.}"
+    target="$SORA_ICON_DIR/${name}-${app}.${ext}"
+    cp "$icon" "$target"
+    printf '%s\n' "$target"
+  else
+    printf '%s\n' "$icon"
+  fi
+}
+
+cmd_list() {
+  echo "Uygulama kısayolları:"
+  local f name
+  {
+    for d in /usr/share/applications /usr/local/share/applications "$SORA_APP_DIR"; do
+      [[ -d "$d" ]] || continue
+      while IFS= read -r f; do
+        name="$(awk -F= '/^Name=/{print $2; exit}' "$f")"
+        printf '  %-30s %s\n' "$(basename "$f" .desktop)" "${name:-?}"
+      done < <(find "$d" -name '*.desktop' -type f 2>/dev/null | sort)
+    done
+  } | sort -u -k1,1
+}
+
+cmd_set() {
+  local app="$1" icon="$2" desktop override resolved
+  desktop="$(find_desktop "$app")" || { echo "Hata: '$app' uygulaması bulunamadı (sora-icon list ile bakın)"; exit 1; }
+  resolved="$(resolve_icon "$app" "$icon")"
+  install -d -m 0755 "$SORA_APP_DIR"
+  override="$SORA_APP_DIR/$(basename "$desktop")"
+  [[ "$desktop" != "$override" ]] && cp "$desktop" "$override"
+  if grep -q '^Icon=' "$override"; then
+    sed -i "s|^Icon=.*|Icon=${resolved}|" "$override"
+  else
+    printf 'Icon=%s\n' "$resolved" >> "$override"
+  fi
+  fix_ownership
+  echo "Tamam: $(basename "$desktop") -> ikon '$resolved'"
+  echo "Not: Dock'ta görünmesi için Alt+F2 -> r ile GNOME'u yenileyin."
+}
+
+cmd_reset() {
+  local app="$1" desktop override
+  desktop="$(find_desktop "$app")" || { echo "Hata: '$app' bulunamadı"; exit 1; }
+  override="$SORA_APP_DIR/$(basename "$desktop")"
+  if [[ -f "$override" ]]; then
+    rm -f "$override"
+    fix_ownership
+    echo "Tamam: ikon varsayılana döndü."
+  else
+    echo "Bilgi: '$app' için özel ikon yok."
+  fi
+}
+
+gset_icon_theme() {
+  if [[ -n "${SUDO_USER:-}" && "${SUDO_USER}" != "root" ]]; then
+    sudo -n -u "$SUDO_USER" gsettings set org.gnome.desktop.interface icon-theme "$1" 2>/dev/null && return 0
+  fi
+  gsettings set org.gnome.desktop.interface icon-theme "$1" 2>/dev/null
+}
+
+cmd_theme() {
+  if gset_icon_theme "$1"; then
+    echo "Tamam: ikon teması '$1' yapıldı."
+  else
+    echo "Hata: tema değiştirilemedi (oturum açık kullanıcı olarak deneyin)."
+    exit 1
+  fi
+}
+
+cmd_themes() {
+  echo "Kurulu ikon temaları:"
+  local t
+  {
+    for d in /usr/share/icons "$REAL_HOME/.local/share/icons"; do
+      [[ -d "$d" ]] || continue
+      while IFS= read -r t; do
+        if [[ -f "$t/index.theme" ]] || [[ -d "$t/scalable" || -d "$t/48x48" || -d "$t/24x24" ]]; then
+          echo "$(basename "$t")"
+        fi
+      done < <(find "$d" -mindepth 1 -maxdepth 1 -type d 2>/dev/null | sort)
+    done
+  } | sort -u
+}
+
+cmd_install() {
+  local src="$1" name="${2:-}" target
+  [[ -f "$src" ]] || { echo "Hata: dosya bulunamadı: $src"; exit 1; }
+  install -d -m 0755 "$SORA_ICON_DIR"
+  if [[ -n "$name" ]]; then
+    target="$SORA_ICON_DIR/${name}.${src##*.}"
+  else
+    target="$SORA_ICON_DIR/$(basename "$src")"
+  fi
+  cp "$src" "$target"
+  fix_ownership
+  echo "Tamam: $target"
+  echo "Kullanım: sora-icon set <uygulama> \"$target\""
+}
+
+cmd_status() {
+  echo "Özel uygulama ikonları:"
+  local f icon found=0
+  for f in "$SORA_APP_DIR"/*.desktop; do
+    [[ -f "$f" ]] || continue
+    icon="$(awk -F= '/^Icon=/{print $2; exit}' "$f")"
+    printf '  %-30s %s\n' "$(basename "$f" .desktop)" "${icon:-}"
+    found=1
+  done
+  if [[ $found -eq 0 ]]; then
+    echo "  (özel ikon yok)"
+  fi
+  return 0
+}
+
+main() {
+  local cmd="${1:-}"
+  case "$cmd" in
+    list)     cmd_list ;;
+    set)      [[ $# -eq 3 ]] || { usage; exit 1; }; cmd_set "$2" "$3" ;;
+    reset)    [[ $# -eq 2 ]] || { usage; exit 1; }; cmd_reset "$2" ;;
+    theme)    [[ $# -eq 2 ]] || { usage; exit 1; }; cmd_theme "$2" ;;
+    themes)   cmd_themes ;;
+    install)  [[ $# -ge 2 ]] || { usage; exit 1; }; cmd_install "$2" "${3:-}" ;;
+    status)   cmd_status ;;
+    -h|--help) usage ;;
+    *)
+      usage
+      [[ -z "$cmd" ]] || echo "Bilinmeyen komut: $cmd"
+      exit 1
+      ;;
+  esac
+}
+
+main "$@"

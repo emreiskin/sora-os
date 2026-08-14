@@ -20,11 +20,8 @@ tar --exclude='.git' -C "$REPO" -cf - . | tar -C "$BUILD_DIR/config/includes.chr
 cd "$BUILD_DIR"
 sudo lb config
 
-# Hook, lb config sonrasi kopyalanir (lb config config agacini yeniden olusturur)
-mkdir -p config/hooks/normal
-cp -a "$REPO/build/live/hooks/9500-sora-install.chroot" config/hooks/normal/9500-sora-install.chroot
-cp -a "$REPO/build/live/hooks/9500-sora-install.chroot" config/hooks/9500-sora-install.chroot
-chmod +x config/hooks/normal/9500-sora-install.chroot config/hooks/9500-sora-install.chroot
+# Hook, lb config sonrasi kopyalanir (lb config config agacini yeniden olusturur, root sahibidir)
+sudo bash -c "mkdir -p config/hooks/normal && cp -a '$REPO/build/live/hooks/9500-sora-install.chroot' config/hooks/normal/9500-sora-install.chroot && cp -a '$REPO/build/live/hooks/9500-sora-install.chroot' config/hooks/9500-sora-install.chroot && chmod +x config/hooks/normal/9500-sora-install.chroot config/hooks/9500-sora-install.chroot"
 echo "==> Hook dosyalari:"
 ls -la config/hooks config/hooks/normal
 

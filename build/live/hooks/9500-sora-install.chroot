@@ -16,7 +16,7 @@ apt-get install -y --no-install-recommends \
   grub-efi-amd64-signed grub-efi-amd64-bin grub-pc-bin shim-signed \
   isolinux syslinux-common syslinux-utils \
   unzip curl python3 \
-  dkms build-essential || echo "(!) canlı sistem paketlerinden bazıları kurulamadı"
+  dkms build-essential linux-headers-generic || echo "(!) canlı sistem paketlerinden bazıları kurulamadı"
 
 # Yaygın NVIDIA desteği ISO'ya önceden gömülür (dkms ile modül derlenir)
 apt-get install -y --no-install-recommends nvidia-driver-550 libnvidia-egl-wayland1 || echo "(!) NVIDIA paketi gömülemedi (opsiyonel)"

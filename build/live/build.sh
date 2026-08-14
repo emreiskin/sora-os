@@ -15,6 +15,7 @@ trap 'sudo rm -rf "$BUILD_DIR" 2>/dev/null || true' EXIT
 
 mkdir -p "$BUILD_DIR/config/includes.chroot/opt/sora"
 cp -a "$REPO/build/live/auto" "$BUILD_DIR/auto"
+chmod +x "$BUILD_DIR/auto/config"
 tar --exclude='.git' -C "$REPO" -cf - . | tar -C "$BUILD_DIR/config/includes.chroot/opt/sora" -xf -
 
 cd "$BUILD_DIR"

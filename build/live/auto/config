@@ -11,7 +11,6 @@ lb config noauto \
   --security true \
   --binary-images iso-hybrid \
   --binary-filesystem squashfs \
-  --linux-packages "linux-generic" \
   --bootappend-live "boot=casper quiet splash" \
   --bootappend-install "boot=casper only-ubiquity quiet splash" \
   --memtest none \

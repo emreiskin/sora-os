@@ -22,7 +22,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y \
             live-build fakeroot debootstrap \
-            xorriso squashfs-tools isolinux syslinux-common \
+            xorriso squashfs-tools isolinux syslinux-common syslinux-utils \
             grub-efi-amd64-bin grub-pc-bin \
             dosfstools mtools \
             ubuntu-keyring debian-archive-keyring

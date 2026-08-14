@@ -14,7 +14,7 @@ apt-get install -y --no-install-recommends \
   casper \
   ubiquity ubiquity-frontend-gtk ubiquity-slideshow-ubuntu \
   grub-efi-amd64-signed grub-efi-amd64-bin grub-pc-bin shim-signed \
-  isolinux syslinux-common \
+  isolinux syslinux-common syslinux-utils \
   unzip curl python3 \
   dkms build-essential || echo "(!) canlı sistem paketlerinden bazıları kurulamadı"
 

@@ -10,6 +10,7 @@ lb config noauto \
   --archive-areas "main restricted universe multiverse" \
   --security true \
   --binary-images iso-hybrid \
+  --bootloader "grub-pc grub-efi" \
   --binary-filesystem squashfs \
   --bootappend-live "boot=casper quiet splash" \
   --bootappend-install "boot=casper only-ubiquity quiet splash" \

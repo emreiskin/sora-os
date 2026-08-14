@@ -16,7 +16,7 @@ lb config noauto \
   --bootappend-install "boot=casper only-ubiquity quiet splash" \
   --memtest none \
   --source false \
-  --checksums false \
+  --checksums none \
   --debian-installer false \
   --interactive false \
   --iso-volume "Sora OS" \

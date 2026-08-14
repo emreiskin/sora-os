@@ -31,12 +31,27 @@ jobs:
         run: df -h
 
       - name: ISO üret (live-build)
-        run: bash build/live/build.sh
+        run: |
+          set +e
+          bash build/live/build.sh 2>&1 | tee /tmp/sora-build.log
+          status=$?
+          set -e
+          if [[ $status -ne 0 ]] || [[ ! -f build/live/live-image-amd64.hybrid.iso ]]; then
+            echo "===== lb build log (son 100 satir) ====="
+            tail -n 100 build/live/lb-build.log 2>/dev/null || tail -n 100 /tmp/sora-build.log
+            echo "===== BUILD BASARISIZ (cikis: $status) ====="
+            exit 1
+          fi
+          echo "==> ISO uretildi"
 
       - name: ISO artefakt olarak yükle
+        if: always()
+        continue-on-error: true
         uses: actions/upload-artifact@v4
         with:
           name: Sora-OS-ISO
-          path: build/live/live-image-amd64.hybrid.iso
-          if-no-files-found: error
+          path: |
+            build/live/live-image-amd64.hybrid.iso
+            build/live/lb-build.log
+          if-no-files-found: warn
           retention-days: 14

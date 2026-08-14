@@ -11,7 +11,7 @@ echo "Sora OS live-build başlıyor"
 echo "Proje: ${REPO}"
 
 BUILD_DIR="$(mktemp -d /tmp/sora-lb.XXXXXX)"
-trap 'rm -rf "$BUILD_DIR"' EXIT
+trap 'sudo rm -rf "$BUILD_DIR" 2>/dev/null || true' EXIT
 
 mkdir -p "$BUILD_DIR/config/includes.chroot/opt/sora" "$BUILD_DIR/config/hooks/normal"
 cp -a "$REPO/build/live/auto" "$BUILD_DIR/auto"
@@ -21,7 +21,7 @@ chmod +x "$BUILD_DIR/config/hooks/normal/9500-sora-install.chroot" "$BUILD_DIR/a
 
 cd "$BUILD_DIR"
 sudo lb config
-sudo lb build
+sudo lb build 2>&1 | tee "$OUT/lb-build.log"
 
 echo "==> ISO hazır:"
 ls -lh live-image-amd64.hybrid.iso
